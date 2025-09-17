@@ -1,0 +1,39 @@
+/bin/
+# Compiled class files
+*.class
+
+# Jar files
+*.jar
+*.war
+*.ear
+
+# Log files
+*.log
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# Gradle
+.gradle/
+build/
+*.iml
+.idea/ # IntelliJ IDEA project files
+.classpath
+.project
+.settings/ # Eclipse project settings
+
+# OS-specific files
+.DS_Store # macOS
+Thumbs.db # Windows
+
+# Temporary files
+*~
+*.swp
