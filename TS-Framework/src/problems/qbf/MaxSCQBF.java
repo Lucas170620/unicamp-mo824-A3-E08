@@ -55,15 +55,16 @@ public class MaxSCQBF extends QBF_Inverse {
            }
 
            // elementos de cada S[i]
-           for (int i = 0; i < this.n; i++) {
-               this.S[i] = new ArrayList<>(sizes[i]);
-               for (int j = 0; j < sizes[i]; j++) {
+           for (int i = 0; i < n; i++) {
+               S[i] = new ArrayList<>(sizes[i]);
+               for (int t = 0; t < sizes[i]; t++) {
                    st.nextToken();
                    int k = (int) st.nval;
-                   if (k < 0 || k >= this.n) {
-                       throw new IOException("Elemento de S[" + i + "] fora de [0," + (this.n - 1) + "]: k=" + k);
-                   }
-                   this.S[i].add(k);
+                   /*if (k < 0 || k >= n) -> caso for fazer para instancias de 0 a n-1*/
+                   if (k < 1 || k > n)
+                       throw new IOException("Elemento de S[" + (i+1) + "] fora de [1," + n + "]: k=" + k);
+                   /*S[i].add(k); -> -> caso for fazer para instancias de 0 a n-1*/
+                   S[i].add(k-1);
                }
            }
 

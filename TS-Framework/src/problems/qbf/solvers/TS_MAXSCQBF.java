@@ -172,7 +172,9 @@ public class TS_MAXSCQBF extends AbstractTS<Integer> {
 
     public static void main(String[] args) throws IOException {
         long startTime = System.currentTimeMillis();
-        String inst = (args.length > 0) ? args[0] : "instances/max-sc-qbf/1-max_sc_qbf-n_25-k_3.txt";
+//        String inst = (args.length > 0) ? args[0] : "instances/max-sc-qbf/1-max_sc_qbf-n_25-k_3.txt";
+        String inst = (args.length > 0) ? args[0] : "instances/scqbf/scqbf100_1";
+
         TS_MAXSCQBF tabusearch = new TS_MAXSCQBF(20, 1000, inst);
         Solution<Integer> bestSol = tabusearch.solve();
         System.out.println("Best = " + bestSol + " | max = " + (-bestSol.cost));
