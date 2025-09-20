@@ -1,0 +1,4 @@
+INDEX VERSION 1.134+/home/eliel/Documentos/eliel/Unicamp/PO/unicamp-mo824-A3-E08/.metadata/.plugins/org.eclipse.jdt.core
+1865797976.index
+900586112.index
+108425824.index
