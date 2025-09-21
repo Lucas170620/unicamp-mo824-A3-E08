@@ -12,7 +12,7 @@ import solutions.Solution;
 
 /**
  * Metaheuristic TS (Tabu Search) for obtaining an optimal solution to a QBF
- * (Quadractive Binary Function -- {@link #QuadracticBinaryFunction}).
+ * (Quadractive Binary Function -- {@link #}).
  * Since by default this TS considers minimization problems, an inverse QBF
  *  function is adopted.
  * 
