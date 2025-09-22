@@ -286,13 +286,12 @@ public class TS_MAXSCQBF extends AbstractTS<Integer> {
                 TS_MAXSCQBF ts;
                 for (Config cfg : configs) {
                     long t0 = System.currentTimeMillis();
-                    if (cfg.name.equals("PROBABILISTIC")){
+                    if (cfg.name.contains("PROBABILISTIC")){
                         ts = new TS_MAXSCQBF_Probabilistic(
                                 cfg.tenure,
                                 maxIterations,
                                 path,
                                 cfg.mode,
-                                cfg.sample_rate,
                                 cfg.sample_rate
                         );
                     }

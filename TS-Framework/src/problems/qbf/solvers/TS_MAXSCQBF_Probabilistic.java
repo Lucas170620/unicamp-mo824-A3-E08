@@ -10,21 +10,18 @@ import solutions.Solution;
 public class TS_MAXSCQBF_Probabilistic extends TS_MAXSCQBF {
 
      // Taxa de amostragem para movimentos de inserção
-    private final double insertionSampleRate;
+    private final double sampleRate;
 
     //Taxa de amostragem para movimentos de remoção/troca
-    private final double removalSampleRate;
     public TS_MAXSCQBF_Probabilistic(
             Integer tenure,
             Integer iterations,
             String filename,
             SearchMode mode,
-            double insertionSampleRate,
-            double removalSampleRate
+            double sampleRate
     ) throws IOException {
         super(tenure, iterations, filename, mode);
-        this.insertionSampleRate =  insertionSampleRate;
-        this.removalSampleRate = removalSampleRate;
+        this.sampleRate =  sampleRate;
     }
 
     private <T> List<T> createSample(List<T> source, double rate) {
@@ -52,9 +49,7 @@ public class TS_MAXSCQBF_Probabilistic extends TS_MAXSCQBF {
             return super.neighborhoodMoveBest();
         }
 
-        // Cria as amostras aleatórias da lista de candidatos (CL) e da solução (sol).
-        List<Integer> clSample = createSample(this.CL, this.insertionSampleRate);
-        List<Integer> solSample = createSample(this.sol, this.removalSampleRate);
+        List<Integer> clSample = createSample(this.CL, this.sampleRate);
 
         Double minDelta = Double.POSITIVE_INFINITY;
         Integer bestIn = null, bestOut = null;
@@ -73,7 +68,7 @@ public class TS_MAXSCQBF_Probabilistic extends TS_MAXSCQBF {
         }
 
         // Busca por melhor movimento de REMOÇÃO na amostra
-        for (Integer candOut : solSample) {
+        for (Integer candOut : sol) {
             if (eval.removalBreaksCoverage(candOut)) continue;
             double d = ObjFunction.evaluateRemovalCost(candOut, sol);
             boolean isAdmissible = (!TL.contains(candOut)) || (sol.cost + d < bestSol.cost);
@@ -86,7 +81,7 @@ public class TS_MAXSCQBF_Probabilistic extends TS_MAXSCQBF {
 
         //  Busca por melhor movimento de TROCA entre as amostras
         for (Integer candIn : clSample) {
-            for (Integer candOut : solSample) {
+            for (Integer candOut : sol) {
                 if (!swapPreservaCobertura(candOut, candIn)) continue;
                 double d = ObjFunction.evaluateExchangeCost(candIn, candOut, sol);
                 boolean isAdmissible = (!TL.contains(candIn) && !TL.contains(candOut)) || (sol.cost + d < bestSol.cost);
@@ -109,8 +104,7 @@ public class TS_MAXSCQBF_Probabilistic extends TS_MAXSCQBF {
         if (!eval.isFeasible()) {
             return super.neighborhoodMoveFirst();
         }
-        List<Integer> clSample = createSample(this.CL, this.insertionSampleRate);
-        List<Integer> solSample = createSample(this.sol, this.removalSampleRate);
+        List<Integer> clSample = createSample(this.CL, this.sampleRate);
         Double bestFallbackDelta = Double.POSITIVE_INFINITY;
         Integer bestFallbackIn = null, bestFallbackOut = null;
 
@@ -130,7 +124,7 @@ public class TS_MAXSCQBF_Probabilistic extends TS_MAXSCQBF {
             }
         }
 
-        for (Integer candOut : solSample) {
+        for (Integer candOut : sol) {
             if (eval.removalBreaksCoverage(candOut)) continue;
             double delta = ObjFunction.evaluateRemovalCost(candOut, sol);
             boolean isAdmissible = (!TL.contains(candOut)) || (sol.cost + delta < bestSol.cost);
@@ -146,7 +140,7 @@ public class TS_MAXSCQBF_Probabilistic extends TS_MAXSCQBF {
         }
 
         for (Integer candIn : clSample) {
-            for (Integer candOut : solSample) {
+            for (Integer candOut : sol) {
                 if (!swapPreservaCobertura(candOut, candIn)) continue;
                 double delta = ObjFunction.evaluateExchangeCost(candIn, candOut, sol);
                 boolean isAdmissible = (!TL.contains(candIn) && !TL.contains(candOut)) || (sol.cost + delta < bestSol.cost);
