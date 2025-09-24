@@ -22,7 +22,7 @@ public class TS_MAXSCQBF extends AbstractTS<Integer> {
 
     public enum SearchMode { FIRST_IMPROVING, BEST_IMPROVING }
     private final Integer fake = Integer.valueOf(-1);
-    private final MaxSCQBF eval;
+    protected final MaxSCQBF eval;
     private final SearchMode mode;
 
     public TS_MAXSCQBF(Integer tenure, Integer iterations, String filename) throws IOException {
@@ -70,7 +70,7 @@ public class TS_MAXSCQBF extends AbstractTS<Integer> {
         return (mode == SearchMode.BEST_IMPROVING) ? neighborhoodMoveBest() : neighborhoodMoveFirst();
     }
 
-    private Solution<Integer> neighborhoodMoveFirst() {
+    protected Solution<Integer> neighborhoodMoveFirst() {
         eval.applySolutionToCoverage(sol);
 
         if (!eval.isFeasible()) {
@@ -138,7 +138,7 @@ public class TS_MAXSCQBF extends AbstractTS<Integer> {
         return sol;
     }
 
-    private Solution<Integer> neighborhoodMoveBest() {
+    protected Solution<Integer> neighborhoodMoveBest() {
         eval.applySolutionToCoverage(sol);
 
         if (!eval.isFeasible()) {
@@ -196,7 +196,7 @@ public class TS_MAXSCQBF extends AbstractTS<Integer> {
         return sol;
     }
 
-    private void aplicarMovimento(Integer out, Integer in) {
+    protected void aplicarMovimento(Integer out, Integer in) {
         TL.poll();
         if (out != null) {
             sol.remove(out);
@@ -216,7 +216,7 @@ public class TS_MAXSCQBF extends AbstractTS<Integer> {
         ObjFunction.evaluate(sol);
     }
 
-    private boolean swapPreservaCobertura(int out, int in) {
+    protected boolean swapPreservaCobertura(int out, int in) {
         for (Integer k : eval.S[out]) if (eval.coverCount[k] == 1 && !eval.covers(in, k)) return false;
         return true;
     }
@@ -237,24 +237,26 @@ public class TS_MAXSCQBF extends AbstractTS<Integer> {
     }
 
     private static class Config {
-        String name; SearchMode mode; int tenure;
+        String name; SearchMode mode; int tenure; double sample_rate = 0.1;
         Config(String n, SearchMode m, int t) { name = n; mode = m; tenure = t; }
+        Config(String n, SearchMode m, int t, double sr) { name = n; mode = m; tenure = t; sample_rate =sr;}
     }
 
     public static void main(String[] args) throws Exception {
-        final String instancesDir   = (args.length > 0) ? args[0] : "instances/max-sc-qbf";
-        final String outCsv         = (args.length > 1) ? args[1] : "results/ts_results.csv";
+        final String instancesDir   = (args.length > 0) ? args[0] : "TS-Framework/instances/max-sc-qbf2";
+        final String outCsv         = (args.length > 1) ? args[1] : "TS-Framework/results/ts_results.csv";
         final long timeLimitSeconds = (args.length > 2) ? Long.parseLong(args[2]) : 1800L;
         final int maxIterations     = (args.length > 3) ? Integer.parseInt(args[3]) : 1_000_0;
         final int T1                = (args.length > 4) ? Integer.parseInt(args[4]) : 20;
         final int T2                = (args.length > 5) ? Integer.parseInt(args[5]) : (2 * T1);
 
         final long timeLimitMillis = timeLimitSeconds * 1000L;
-
         Config[] configs = new Config[] {
             new Config("PADRAO",        SearchMode.FIRST_IMPROVING, T1),
             new Config("PADRAO+BEST",   SearchMode.BEST_IMPROVING,  T1),
-            new Config("PADRAO+TENURE", SearchMode.FIRST_IMPROVING, T2)
+            new Config("PADRAO+TENURE", SearchMode.FIRST_IMPROVING, T2),
+            new Config("PROBABILISTIC(SR=0.2)", SearchMode.FIRST_IMPROVING, T1, 0.2),
+            new Config("PROBABILISTIC(SR=0.6)", SearchMode.FIRST_IMPROVING, T1, 0.6)
         };
 
         File dir = new File(instancesDir);
@@ -281,10 +283,21 @@ public class TS_MAXSCQBF extends AbstractTS<Integer> {
                 Matcher m = pat.matcher(f.getName());
                 String nStr = "", kStr = "";
                 if (m.find()) { nStr = m.group(1); kStr = m.group(2); }
-
+                TS_MAXSCQBF ts;
                 for (Config cfg : configs) {
                     long t0 = System.currentTimeMillis();
-                    TS_MAXSCQBF ts = new TS_MAXSCQBF(cfg.tenure, maxIterations, path, cfg.mode);
+                    if (cfg.name.contains("PROBABILISTIC")){
+                        ts = new TS_MAXSCQBF_Probabilistic(
+                                cfg.tenure,
+                                maxIterations,
+                                path,
+                                cfg.mode,
+                                cfg.sample_rate
+                        );
+                    }
+                    else {
+                        ts = new TS_MAXSCQBF(cfg.tenure, maxIterations, path, cfg.mode);
+                    }
                     Solution<Integer> best = ts.solveWithTimeLimit(timeLimitMillis, maxIterations);
                     long t1 = System.currentTimeMillis();
 
