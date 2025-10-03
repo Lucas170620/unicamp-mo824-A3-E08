@@ -25,19 +25,17 @@ public class TS_MAXSCQBF extends AbstractTS<Integer> {
     protected final MaxSCQBF eval;
     private final SearchMode mode;
 
-    // ====== Parâmetros e estado do Strategic Oscillation (SO) ======
-    protected boolean useSO = false;        // desativado por padrão
-    protected double lambda = 100.0;        // penalidade inicial
+    protected boolean useSO = false;
+    protected double lambda = 100.0;
     protected double lambdaMin = 1e-6;
     protected double lambdaMax = 1e9;
-    protected double etaUp = 0.10;          // passo relativo ao ficar inviável por muito tempo
-    protected double etaDown = 0.05;        // passo relativo ao ficar viável por muito tempo
-    protected int winViable = 25;           // janelas para ajustar lambda
+    protected double etaUp = 0.10;
+    protected double etaDown = 0.05;
+    protected int winViable = 25;
     protected int winInfeasible = 25;
-    protected int stayViable = 0;           // contadores de permanência
+    protected int stayViable = 0;
     protected int stayInfeasible = 0;
 
-    // ====== Construtores ======
     public TS_MAXSCQBF(Integer tenure, Integer iterations, String filename) throws IOException {
         this(tenure, iterations, filename, SearchMode.FIRST_IMPROVING);
     }
@@ -48,7 +46,6 @@ public class TS_MAXSCQBF extends AbstractTS<Integer> {
         this.mode = mode;
     }
 
-    // ====== Habilitar/parametrizar SO (opcional) ======
     public void setSO(boolean on) { this.useSO = on; }
     public void setSOParams(double lambda, double lambdaMin, double lambdaMax,
                             double etaUp, double etaDown, int winViable, int winInfeasible) {
@@ -80,7 +77,6 @@ public class TS_MAXSCQBF extends AbstractTS<Integer> {
 
     @Override
     public void updateCL() {
-        // padrão: todos os elementos fora da solução seguem candidatos
     }
 
     @Override
@@ -96,13 +92,10 @@ public class TS_MAXSCQBF extends AbstractTS<Integer> {
         return (mode == SearchMode.BEST_IMPROVING) ? neighborhoodMoveBest() : neighborhoodMoveFirst();
     }
 
-    // =============================
-    //   FIRST IMPROVING
-    // =============================
+
     protected Solution<Integer> neighborhoodMoveFirst() {
         eval.applySolutionToCoverage(sol);
 
-        // Reparar imediatamente APENAS se SO estiver desligado
         if (!useSO && !eval.isFeasible()) {
             int uncovered = -1;
             for (int k = 0; k < eval.n; k++) if (eval.coverCount[k] == 0) { uncovered = k; break; }
@@ -120,20 +113,18 @@ public class TS_MAXSCQBF extends AbstractTS<Integer> {
                     for (Integer k : eval.S[bestCand]) eval.coverCount[k]++;
                     CL.remove(bestCand);
                     ObjFunction.evaluate(sol);
-                    postMoveUpdate(); // ajusta lambda/contadores
+                    postMoveUpdate();
                 }
             }
             return sol;
         }
 
-        // SO ativado OU solução já viável: segue vizinhança normal
         final int vNow = eval.violationFromCoverage();
-        double bestFallbackScore = Double.POSITIVE_INFINITY; // score = deltaF (SO) ou delta (padrão)
+        double bestFallbackScore = Double.POSITIVE_INFINITY;
         Integer bestFallbackIn = null, bestFallbackOut = null;
 
         updateCL();
 
-        // INSERÇÃO
         for (Integer candIn : CL) {
             double dCost = ObjFunction.evaluateInsertionCost(candIn, sol);
             int dV = useSO ? eval.deltaViolationInsertion(candIn) : 0;
@@ -152,10 +143,9 @@ public class TS_MAXSCQBF extends AbstractTS<Integer> {
             }
         }
 
-        // REMOÇÃO
         for (Integer candOut : sol) {
-            if (!useSO && eval.removalBreaksCoverage(candOut)) continue; // manter viável no modo padrão
-
+            if (!useSO && eval.removalBreaksCoverage(candOut)) continue;
+            
             double dCost = ObjFunction.evaluateRemovalCost(candOut, sol);
             int dV = useSO ? eval.deltaViolationRemoval(candOut) : 0;
             double score = useSO ? (dCost + lambda * dV) : dCost;
@@ -173,7 +163,6 @@ public class TS_MAXSCQBF extends AbstractTS<Integer> {
             }
         }
 
-        // TROCA
         for (Integer candIn : CL) {
             for (Integer candOut : sol) {
                 if (!useSO && !swapPreservaCobertura(candOut, candIn)) continue;
@@ -196,19 +185,14 @@ public class TS_MAXSCQBF extends AbstractTS<Integer> {
             }
         }
 
-        // Sem melhoria estrita: aplica melhor fallback por score
         aplicarMovimento(bestFallbackOut, bestFallbackIn);
         postMoveUpdate();
         return sol;
     }
 
-    // =============================
-    //   BEST IMPROVING
-    // =============================
     protected Solution<Integer> neighborhoodMoveBest() {
         eval.applySolutionToCoverage(sol);
 
-        // Reparar imediatamente APENAS se SO estiver desligado
         if (!useSO && !eval.isFeasible()) {
             int uncovered = -1;
             for (int k = 0; k < eval.n; k++) if (eval.coverCount[k] == 0) { uncovered = k; break; }
@@ -232,14 +216,12 @@ public class TS_MAXSCQBF extends AbstractTS<Integer> {
             return sol;
         }
 
-        // SO ativado OU solução já viável: escolhe melhor score global
         final int vNow = eval.violationFromCoverage();
         double minScore = Double.POSITIVE_INFINITY;
         Integer bestIn = null, bestOut = null;
 
         updateCL();
 
-        // INSERÇÃO
         for (Integer candIn : CL) {
             double dCost = ObjFunction.evaluateInsertionCost(candIn, sol);
             int dV = useSO ? eval.deltaViolationInsertion(candIn) : 0;
@@ -253,7 +235,6 @@ public class TS_MAXSCQBF extends AbstractTS<Integer> {
             }
         }
 
-        // REMOÇÃO
         for (Integer candOut : sol) {
             if (!useSO && eval.removalBreaksCoverage(candOut)) continue;
 
@@ -269,7 +250,6 @@ public class TS_MAXSCQBF extends AbstractTS<Integer> {
             }
         }
 
-        // TROCA
         for (Integer candIn : CL) {
             for (Integer candOut : sol) {
                 if (!useSO && !swapPreservaCobertura(candOut, candIn)) continue;
@@ -292,7 +272,6 @@ public class TS_MAXSCQBF extends AbstractTS<Integer> {
         return sol;
     }
 
-    // ===== Aplicação do movimento (inalterado) =====
     protected void aplicarMovimento(Integer out, Integer in) {
         TL.poll();
         if (out != null) {
@@ -318,13 +297,10 @@ public class TS_MAXSCQBF extends AbstractTS<Integer> {
         return true;
     }
 
-    // ===== Atualização pós-movimento: incumbente viável + ajuste de lambda =====
     protected void postMoveUpdate() {
-        // Atualiza incumbente SOMENTE se a solução é viável
         if (eval.isFeasible() && sol.cost < bestSol.cost) {
             bestSol = new Solution<>(sol);
         }
-        // Ajuste de lambda para SO
         if (useSO) {
             if (eval.isFeasible()) {
                 stayViable++; stayInfeasible = 0;
@@ -342,7 +318,6 @@ public class TS_MAXSCQBF extends AbstractTS<Integer> {
         }
     }
 
-    // ===== Laço externo com limite de tempo =====
     public Solution<Integer> solveWithTimeLimit(long timeLimitMillis, int maxIterations) {
         CL = makeCL(); RCL = makeRCL(); TL = makeTL();
         sol = createEmptySol(); ObjFunction.evaluate(sol);
@@ -352,13 +327,11 @@ public class TS_MAXSCQBF extends AbstractTS<Integer> {
         int it = 0;
         while (it < maxIterations && (System.currentTimeMillis() - start) < timeLimitMillis) {
             neighborhoodMove();
-            // incumbente viável já é atualizado em postMoveUpdate()
             it++;
         }
         return bestSol;
     }
 
-    // ====== Programa de experimentos (inalterado) ======
     private static class Config {
         String name; SearchMode mode; int tenure; double sample_rate = 0.1;
         Config(String n, SearchMode m, int t) { name = n; mode = m; tenure = t; }
@@ -378,8 +351,8 @@ public class TS_MAXSCQBF extends AbstractTS<Integer> {
             new Config("PADRAO",        SearchMode.FIRST_IMPROVING, T1),
             new Config("PADRAO+BEST",   SearchMode.BEST_IMPROVING,  T1),
             new Config("PADRAO+TENURE", SearchMode.FIRST_IMPROVING, T2),
-//            new Config("PROBABILISTIC(SR=0.2)", SearchMode.FIRST_IMPROVING, T1, 0.2),
-//            new Config("PROBABILISTIC(SR=0.6)", SearchMode.FIRST_IMPROVING, T1, 0.6)
+            new Config("PROBABILISTIC(SR=0.2)", SearchMode.FIRST_IMPROVING, T1, 0.2),
+            new Config("PROBABILISTIC(SR=0.6)", SearchMode.FIRST_IMPROVING, T1, 0.6)
         };
 
         File dir = new File(instancesDir);
